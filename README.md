@@ -8,4 +8,7 @@ A plugin for panning and zooming images by touch.
 new ZoomableImage(new AssetImage('images/squirrel.jpg'), scale: 16.0)
 ```
 
-That's all you need. See `example/` for a minimal runnable version.
+That's all you need. See below and [`example/`](https://github.com/perlatus/flutter_zoomable_image/tree/master/example)
+for squirrels.
+
+![demo!](https://raw.githubusercontent.com/perlatus/flutter_zoomable_image/master/demo.gif)
