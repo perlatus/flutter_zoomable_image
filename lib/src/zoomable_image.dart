@@ -117,6 +117,7 @@ class _ZoomableImageState extends State<ZoomableImage> {
       child: _child(),
       onScaleStart: _handleScaleStart,
       onScaleUpdate: (d) => _handleScaleUpdate(ctx.size, d),
+      onDoubleTap: () => setState(() => _zoom = _zoom * 2),
     );
   }
 }
