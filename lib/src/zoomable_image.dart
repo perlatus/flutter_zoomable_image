@@ -34,12 +34,19 @@ class _ZoomableImageState extends State<ZoomableImage> {
   double _zoom = 1.0;
 
   void _handleScaleStart(ScaleStartDetails d) {
+    if (_image == null) {
+      return;
+    }
     _startingFocalPoint = d.focalPoint / _scale;
     _previousOffset = _offset;
     _previousZoom = _zoom;
   }
 
   void _handleScaleUpdate(Size size, ScaleUpdateDetails d) {
+    if (_image == null) {
+      return;
+    }
+
     double newZoom = _previousZoom * d.scale;
     bool tooZoomedIn = _image.width * _scale / newZoom <= size.width ||
         _image.height * _scale / newZoom <= size.height;

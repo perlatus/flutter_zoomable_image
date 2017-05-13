@@ -4,7 +4,7 @@ description: A plugin for panning and zooming images by touch.
 author: perlatus <perlatus@zoomable_image.email.vczf.io>
 homepage: https://github.com/perlatus/flutter_zoomable_image
 
-version: 1.0.3
+version: 1.0.4
 
 flutter:
   plugin:
