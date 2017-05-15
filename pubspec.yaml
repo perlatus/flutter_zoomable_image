@@ -6,11 +6,6 @@ homepage: https://github.com/perlatus/flutter_zoomable_image
 
 version: 1.0.4
 
-flutter:
-  plugin:
-    androidPackage: io.vczf.zoomable_image
-    pluginClass: ZoomableImagePlugin
-
 dependencies:
   flutter:
     sdk: flutter
