@@ -1,6 +1,6 @@
 # zoomable_image
 
-A plugin for panning and zooming images by touch.
+A dart+flutter package for panning and zooming images by touch.
 
 ## Getting Started
 
