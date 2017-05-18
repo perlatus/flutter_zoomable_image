@@ -4,11 +4,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
+typedef void ZoomStateCallback(ZoomState);
+
+enum ZoomState {
+  clipped, // Part of the image is not visible.
+  full // The entire image is visible.
+}
+
 class ZoomableImage extends StatefulWidget {
-  ZoomableImage(this.image, {Key key, this.scale = 2.0}) : super(key: key);
+  ZoomableImage(this.image, {Key key, this.scale = 2.0, this.onZoomStateChange})
+      : super(key: key);
 
   final ImageProvider image;
   final double scale;
+
+  final ZoomStateCallback onZoomStateChange;
 
   @override
   _ZoomableImageState createState() => new _ZoomableImageState(scale);
@@ -17,6 +27,8 @@ class ZoomableImage extends StatefulWidget {
 // See /flutter/examples/layers/widgets/gestures.dart
 class _ZoomableImageState extends State<ZoomableImage> {
   _ZoomableImageState(this._scale);
+
+  ZoomState _zoomState;
 
   final double _scale;
 
