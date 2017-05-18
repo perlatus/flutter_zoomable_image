@@ -1,14 +1,17 @@
 import 'dart:ui' as ui;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
 class ZoomableImage extends StatefulWidget {
-  ZoomableImage(this.image, {Key key, this.scale = 2.0}) : super(key: key);
+  ZoomableImage(this.image, {Key key, this.scale = 2.0, this.onTap}) : super(key: key);
 
   final ImageProvider image;
   final double scale;
+
+  final GestureTapCallback onTap;
 
   @override
   _ZoomableImageState createState() => new _ZoomableImageState(scale);
@@ -122,6 +125,7 @@ class _ZoomableImageState extends State<ZoomableImage> {
   Widget build(BuildContext ctx) {
     return new GestureDetector(
       child: _child(),
+      onTap: widget.onTap,
       onScaleStart: _handleScaleStart,
       onScaleUpdate: (d) => _handleScaleUpdate(ctx.size, d),
     );
