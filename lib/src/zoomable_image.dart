@@ -51,43 +51,31 @@ class _ZoomableImageState extends State<ZoomableImage> {
   }
 
   Widget _child() {
-    // Painting in a small box and blowing it up works, whereas painting in a large box and
-    // shrinking it down doesn't because the gesture area becomes smaller than the screen.
-    //
-    // This is bit counterintuitive because it's backwards, but it works.
-
-    Widget bloated = new CustomPaint(
+    return new CustomPaint(
       painter: new _ZoomableImagePainter(
         image: _image,
         offset: _offset,
-        zoom: _zoom / _scale,
+        zoom: _zoom,
       ),
-    );
-
-    return new Transform(
-      transform: new Matrix4.diagonal3Values(_scale, _scale, _scale),
-      child: bloated,
     );
   }
 
   void _handleScaleStart(ScaleStartDetails d) {
-    _startingFocalPoint = d.focalPoint / _scale;
+    _startingFocalPoint = d.focalPoint;
     _previousOffset = _offset;
     _previousZoom = _zoom;
   }
 
   void _handleScaleUpdate(Size size, ScaleUpdateDetails d) {
     double newZoom = _previousZoom * d.scale;
-    bool tooZoomedIn = _image.width * _scale / newZoom <= size.width ||
-        _image.height * _scale / newZoom <= size.height;
-    if (tooZoomedIn) {
+    if (newZoom >= _scale) {
       return;
     }
 
     // Ensure that item under the focal point stays in the same place despite zooming
     final Offset normalizedOffset =
         (_startingFocalPoint - _previousOffset) / _previousZoom;
-    final Offset newOffset = d.focalPoint / _scale - normalizedOffset * _zoom;
+    final Offset newOffset = d.focalPoint - normalizedOffset * _zoom;
 
     setState(() {
       _zoom = newZoom;
@@ -113,7 +101,7 @@ class _ZoomableImageState extends State<ZoomableImage> {
   }
 
   void _handleImageLoaded(ImageInfo info, bool synchronousCall) {
-    print("image loaded: $info $synchronousCall");
+    print("image loaded: $info");
     setState(() {
       _image = info.image;
     });
@@ -135,7 +123,11 @@ class _ZoomableImagePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    paintImage(canvas: canvas, rect: offset & (size * zoom), image: image);
+    paintImage(
+        canvas: canvas,
+        rect: offset & (size * zoom),
+        image: image,
+        fit: BoxFit.contain);
   }
 
   @override
