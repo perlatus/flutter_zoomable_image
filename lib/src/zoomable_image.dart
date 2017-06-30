@@ -57,13 +57,13 @@ class _ZoomableImageState extends State<ZoomableImage> {
       return;
     }
 
+    // Ensure that item under the focal point stays in the same place despite zooming
+    final Offset normalizedOffset = (_startingFocalPoint - _previousOffset) / _previousZoom;
+    final Offset newOffset = d.focalPoint / _scale - normalizedOffset * _zoom;
+
     setState(() {
       _zoom = newZoom;
-
-      // Ensure that item under the focal point stays in the same place despite zooming
-      final Offset normalizedOffset =
-          (_startingFocalPoint - _previousOffset) / _previousZoom;
-      _offset = d.focalPoint / _scale - normalizedOffset * _zoom;
+      _offset = newOffset;
     });
   }
 
