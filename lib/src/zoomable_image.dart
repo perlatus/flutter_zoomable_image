@@ -20,9 +20,8 @@ class ZoomableImage extends StatefulWidget {
 
 // See /flutter/examples/layers/widgets/gestures.dart
 class _ZoomableImageState extends State<ZoomableImage> {
-  _ZoomableImageState(this._scale);
-
   final double _scale;
+  _ZoomableImageState(this._scale);
 
   ImageStream _imageStream;
   ui.Image _image;
@@ -37,20 +36,47 @@ class _ZoomableImageState extends State<ZoomableImage> {
   double _previousZoom;
   double _zoom = 1.0;
 
-  void _handleScaleStart(ScaleStartDetails d) {
+  @override
+  Widget build(BuildContext ctx) {
     if (_image == null) {
-      return;
+      return new Container();
     }
+
+    return new GestureDetector(
+      child: _child(),
+      onTap: widget.onTap,
+      onScaleStart: _handleScaleStart,
+      onScaleUpdate: (d) => _handleScaleUpdate(ctx.size, d),
+    );
+  }
+
+  Widget _child() {
+    // Painting in a small box and blowing it up works, whereas painting in a large box and
+    // shrinking it down doesn't because the gesture area becomes smaller than the screen.
+    //
+    // This is bit counterintuitive because it's backwards, but it works.
+
+    Widget bloated = new CustomPaint(
+      painter: new _ZoomableImagePainter(
+        image: _image,
+        offset: _offset,
+        zoom: _zoom / _scale,
+      ),
+    );
+
+    return new Transform(
+      transform: new Matrix4.diagonal3Values(_scale, _scale, _scale),
+      child: bloated,
+    );
+  }
+
+  void _handleScaleStart(ScaleStartDetails d) {
     _startingFocalPoint = d.focalPoint / _scale;
     _previousOffset = _offset;
     _previousZoom = _zoom;
   }
 
   void _handleScaleUpdate(Size size, ScaleUpdateDetails d) {
-    if (_image == null) {
-      return;
-    }
-
     double newZoom = _previousZoom * d.scale;
     bool tooZoomedIn = _image.width * _scale / newZoom <= size.width ||
         _image.height * _scale / newZoom <= size.height;
@@ -97,40 +123,6 @@ class _ZoomableImageState extends State<ZoomableImage> {
   void dispose() {
     _imageStream.removeListener(_handleImageLoaded);
     super.dispose();
-  }
-
-  Widget _child() {
-    if (_image == null) {
-      return null;
-    }
-
-    // Painting in a small box and blowing it up works, whereas painting in a large box and
-    // shrinking it down doesn't because the gesture area becomes smaller than the screen.
-    //
-    // This is bit counterintuitive because it's backwards, but it works.
-
-    Widget bloated = new CustomPaint(
-      painter: new _ZoomableImagePainter(
-        image: _image,
-        offset: _offset,
-        zoom: _zoom / _scale,
-      ),
-    );
-
-    return new Transform(
-      transform: new Matrix4.diagonal3Values(_scale, _scale, _scale),
-      child: bloated,
-    );
-  }
-
-  @override
-  Widget build(BuildContext ctx) {
-    return new GestureDetector(
-      child: _child(),
-      onTap: widget.onTap,
-      onScaleStart: _handleScaleStart,
-      onScaleUpdate: (d) => _handleScaleUpdate(ctx.size, d),
-    );
   }
 }
 
