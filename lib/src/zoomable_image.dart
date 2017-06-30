@@ -6,7 +6,8 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
 class ZoomableImage extends StatefulWidget {
-  ZoomableImage(this.image, {Key key, this.scale = 2.0, this.onTap}) : super(key: key);
+  ZoomableImage(this.image, {Key key, this.scale = 2.0, this.onTap})
+      : super(key: key);
 
   final ImageProvider image;
   final double scale;
@@ -58,7 +59,8 @@ class _ZoomableImageState extends State<ZoomableImage> {
     }
 
     // Ensure that item under the focal point stays in the same place despite zooming
-    final Offset normalizedOffset = (_startingFocalPoint - _previousOffset) / _previousZoom;
+    final Offset normalizedOffset =
+        (_startingFocalPoint - _previousOffset) / _previousZoom;
     final Offset newOffset = d.focalPoint / _scale - normalizedOffset * _zoom;
 
     setState(() {
