@@ -10,3 +10,4 @@ dependencies:
 flutter:
   assets:
    - images/squirrel.jpg
+   - images/square.png

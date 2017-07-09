@@ -77,7 +77,14 @@ class _ZoomableImageState extends State<ZoomableImage> {
         (_startingFocalPoint - _previousOffset) / _previousZoom;
     final Offset newOffset = d.focalPoint - normalizedOffset * _zoom;
 
+    double zoomDelta = (_zoom - newZoom).abs();
+    double offsetDelta = (_offset - newOffset).distance;
+
+    // print("offsetDelta: $offsetDelta \t\t zoomDelta: $zoomDelta");
+    // print("offset: $_offset");
+
     setState(() {
+      print("$offsetDelta $zoomDelta");
       _zoom = newZoom;
       _offset = newOffset;
     });
