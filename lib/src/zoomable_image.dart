@@ -80,7 +80,7 @@ class _ZoomableImageState extends State<ZoomableImage> {
     double newZoom = _zoom * 2;
     Offset newOffset = _offset - new Offset(fitted.width, fitted.height) / 2.0;
 
-    if (newZoom > _scale) {
+    if (newZoom > 1.0) {
       return;
     }
     setState(() {
@@ -98,7 +98,7 @@ class _ZoomableImageState extends State<ZoomableImage> {
 
   void _handleScaleUpdate(ScaleUpdateDetails d) {
     double newZoom = _previousZoom * d.scale;
-    if (newZoom > _scale) {
+    if (newZoom > 1.0) {
       return;
     }
 
