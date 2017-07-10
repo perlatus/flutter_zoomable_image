@@ -57,12 +57,18 @@ class _ZoomableImageState extends State<ZoomableImage> {
     // This is bit counterintuitive because it's backwards, but it works.
 
     Widget bloated = new CustomPaint(
+      child: new Container(),
       painter: new _ZoomableImagePainter(
         image: _image,
         offset: _offset,
         zoom: _zoom / _scale,
       ),
     );
+
+    bloated = new Stack(children: [
+      new Container(color: Colors.black),
+      bloated,
+    ]);
 
     return new Transform(
       transform: new Matrix4.diagonal3Values(_scale, _scale, _scale),
