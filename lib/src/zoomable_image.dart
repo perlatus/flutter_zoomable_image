@@ -25,6 +25,7 @@ class _ZoomableImageState extends State<ZoomableImage> {
 
   ImageStream _imageStream;
   ui.Image _image;
+  Size _imageSize;
 
   // These values are treated as if unscaled.
 
@@ -43,13 +44,13 @@ class _ZoomableImageState extends State<ZoomableImage> {
 
   Widget _buildLayout(BuildContext ctx, BoxConstraints constraints) {
     if (_offset == null) {
-      Size imageSize = new Size(
+      _imageSize = new Size(
         _image.width.toDouble(),
         _image.height.toDouble(),
       );
 
       Size canvas = constraints.biggest;
-      Size fitted = _containmentSize(canvas, imageSize);
+      Size fitted = _containmentSize(canvas, _imageSize);
 
       Offset delta = canvas - fitted;
       _offset = delta / 2.0; // Centers the image
@@ -58,6 +59,7 @@ class _ZoomableImageState extends State<ZoomableImage> {
     return new GestureDetector(
       child: _child(),
       onTap: widget.onTap,
+      onDoubleTap: () => _handleDoubleTap(ctx),
       onScaleStart: _handleScaleStart,
       onScaleUpdate: _handleScaleUpdate,
     );
@@ -73,6 +75,23 @@ class _ZoomableImageState extends State<ZoomableImage> {
     );
   }
 
+  void _handleDoubleTap(BuildContext ctx) {
+    // double zoom => center to left corner distance doubles
+    // offset = offset - size / 2
+
+    Size fitted = _containmentSize(ctx.size, _imageSize);
+    double newZoom = _zoom * 2;
+    Offset newOffset = _offset - new Offset(fitted.width, fitted.height) / 2.0;
+
+    if (newZoom > _scale) {
+      return;
+    }
+    setState(() {
+      _zoom = newZoom;
+      _offset = newOffset;
+    });
+  }
+
   void _handleScaleStart(ScaleStartDetails d) {
     print("starting scale at ${d.focalPoint} from $_offset $_zoom");
     _startingFocalPoint = d.focalPoint;
@@ -82,7 +101,7 @@ class _ZoomableImageState extends State<ZoomableImage> {
 
   void _handleScaleUpdate(ScaleUpdateDetails d) {
     double newZoom = _previousZoom * d.scale;
-    if (newZoom >= _scale) {
+    if (newZoom > _scale) {
       return;
     }
 
@@ -90,6 +109,8 @@ class _ZoomableImageState extends State<ZoomableImage> {
     final Offset normalizedOffset =
         (_startingFocalPoint - _previousOffset) / _previousZoom;
     final Offset newOffset = d.focalPoint - normalizedOffset * _zoom;
+
+    print("offset: $newOffset; zoom: $newZoom");
 
     setState(() {
       _zoom = newZoom;
