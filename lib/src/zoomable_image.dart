@@ -35,7 +35,7 @@ class _ZoomableImageState extends State<ZoomableImage> {
   Offset _offset;
 
   double _previousZoom;
-  double _zoom = 1.0;
+  double _zoom;
 
   @override
   Widget build(BuildContext ctx) => _image == null
@@ -43,7 +43,7 @@ class _ZoomableImageState extends State<ZoomableImage> {
       : new LayoutBuilder(builder: _buildLayout);
 
   Widget _buildLayout(BuildContext ctx, BoxConstraints constraints) {
-    if (_offset == null) {
+    if (_offset == null || _zoom == null) {
       _imageSize = new Size(
         _image.width.toDouble(),
         _image.height.toDouble(),
@@ -54,6 +54,8 @@ class _ZoomableImageState extends State<ZoomableImage> {
 
       Offset delta = canvas - fitted;
       _offset = delta / 2.0; // Centers the image
+
+      _zoom = canvas.width / _imageSize.width;
     }
 
     return new GestureDetector(
@@ -176,7 +178,7 @@ class _ZoomableImagePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size canvasSize) {
     Size imageSize = new Size(image.width.toDouble(), image.height.toDouble());
-    Size targetSize = _containmentSize(canvasSize, imageSize) * zoom;
+    Size targetSize = imageSize * zoom;
 
     paintImage(
       canvas: canvas,
