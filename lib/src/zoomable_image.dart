@@ -27,15 +27,13 @@ class _ZoomableImageState extends State<ZoomableImage> {
   ui.Image _image;
   Size _imageSize;
 
-  // These values are treated as if unscaled.
-
   Offset _startingFocalPoint;
 
   Offset _previousOffset;
-  Offset _offset;
+  Offset _offset; // where the top left corner of the image is drawn
 
   double _previousZoom;
-  double _zoom;
+  double _zoom; // multiplier applied to scale the full image
 
   @override
   Widget build(BuildContext ctx) => _image == null
@@ -78,9 +76,6 @@ class _ZoomableImageState extends State<ZoomableImage> {
   }
 
   void _handleDoubleTap(BuildContext ctx) {
-    // double zoom => center to left corner distance doubles
-    // offset = offset - size / 2
-
     Size fitted = _containmentSize(ctx.size, _imageSize);
     double newZoom = _zoom * 2;
     Offset newOffset = _offset - new Offset(fitted.width, fitted.height) / 2.0;
