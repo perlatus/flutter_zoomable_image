@@ -93,7 +93,7 @@ class _ZoomableImageState extends State<ZoomableImage> {
     // Ensure that item under the focal point stays in the same place despite zooming
     final Offset normalizedOffset =
         (_startingFocalPoint - _previousOffset) / _previousZoom;
-    final Offset newOffset = d.focalPoint / _scale - normalizedOffset * _zoom;
+    final Offset newOffset = d.focalPoint / _scale - normalizedOffset * newZoom;
 
     setState(() {
       _zoom = newZoom;
