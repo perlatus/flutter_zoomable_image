@@ -6,11 +6,12 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
 class ZoomableImage extends StatefulWidget {
-  ZoomableImage(this.image, {Key key, this.scale = 2.0, this.onTap})
+  ZoomableImage(this.image, {Key key, this.scale = 2.0, this.onTap, this.backgroundColor = Colors.black})
       : super(key: key);
 
   final ImageProvider image;
   final double scale;
+  final Color backgroundColor;
 
   final GestureTapCallback onTap;
 
@@ -66,7 +67,7 @@ class _ZoomableImageState extends State<ZoomableImage> {
     );
 
     bloated = new Stack(children: [
-      new Container(color: Colors.black),
+      new Container(color: widget.backgroundColor),
       bloated,
     ]);
 
