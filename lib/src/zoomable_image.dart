@@ -5,21 +5,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 class ZoomableImage extends StatefulWidget {
+  final ImageProvider image;
+  final double maxScale;
+  final double maxZoom;
+  final double minZoom;
+  final GestureTapCallback onTap;
+  final Color backgroundColor;
+
   ZoomableImage(this.image, {
     Key key,
+    @deprecated double scale,
     /// Maximum ratio to blow up image pixels. A value of 2.0 means that the
-    /// maximum zoom will render a single device pixel up to 4 logical pixels.
-    double scale = 2.0,
+    /// a single device pixel will be rendered as up to 4 logical pixels.
+    this.maxScale = 2.0,
+    /// Maximum zoom relative to the size of the image within the context.
+    /// A value of 4.0 means that the image can be zoomed in to at most 4x its
+    /// starting size.
+    this.maxZoom = 4.0,
+    /// Minimum zoom relative to the size of the image within the context.
+    /// A value of 0.5 means that the image can be zoomed out to be at most 0.5x
+    /// its starting size.
+    this.minZoom = 0.5,
     this.onTap,
     this.backgroundColor = Colors.black,
   })
-      : maxZoom = scale, super(key: key);
-
-  final ImageProvider image;
-  final double maxZoom;
-  final Color backgroundColor;
-
-  final GestureTapCallback onTap;
+      : super(key: key);
 
   @override
   _ZoomableImageState createState() => new _ZoomableImageState();
@@ -36,8 +46,8 @@ class _ZoomableImageState extends State<ZoomableImage> {
   Offset _previousOffset;
   Offset _offset; // where the top left corner of the image is drawn
 
-  double _previousZoom;
-  double _zoom; // multiplier applied to scale the full image
+  double _previousScale;
+  double _scale; // multiplier applied to scale the full image
 
   @override
   Widget build(BuildContext ctx) => _image == null
@@ -45,7 +55,7 @@ class _ZoomableImageState extends State<ZoomableImage> {
       : new LayoutBuilder(builder: _buildLayout);
 
   Widget _buildLayout(BuildContext ctx, BoxConstraints constraints) {
-    if (_offset == null || _zoom == null) {
+    if (_offset == null || _scale == null) {
       _imageSize = new Size(
         _image.width.toDouble(),
         _image.height.toDouble(),
@@ -56,8 +66,7 @@ class _ZoomableImageState extends State<ZoomableImage> {
 
       Offset delta = canvas - fitted;
       _offset = delta / 2.0; // Centers the image
-
-      _zoom = canvas.width / _imageSize.width;
+      _scale = canvas.width / _imageSize.width;
     }
 
     return new GestureDetector(
@@ -75,14 +84,14 @@ class _ZoomableImageState extends State<ZoomableImage> {
       foregroundPainter: new _ZoomableImagePainter(
         image: _image,
         offset: _offset,
-        zoom: _zoom,
+        scale: _scale,
       ),
     );
   }
 
   void _handleDoubleTap(BuildContext ctx) {
-    double newZoom = _zoom * 2;
-    if (newZoom > widget.maxZoom) {
+    double newScale = _scale * 2;
+    if (newScale > widget.maxScale) {
       return;
     }
 
@@ -93,31 +102,31 @@ class _ZoomableImageState extends State<ZoomableImage> {
     Offset newOffset = _offset - (center - _offset);
 
     setState(() {
-      _zoom = newZoom;
+      _scale = newScale;
       _offset = newOffset;
     });
   }
 
   void _handleScaleStart(ScaleStartDetails d) {
-    print("starting scale at ${d.focalPoint} from $_offset $_zoom");
+    print("starting scale at ${d.focalPoint} from $_offset $_scale");
     _startingFocalPoint = d.focalPoint;
     _previousOffset = _offset;
-    _previousZoom = _zoom;
+    _previousScale = _scale;
   }
 
   void _handleScaleUpdate(ScaleUpdateDetails d) {
-    double newZoom = _previousZoom * d.scale;
-    if (newZoom > widget.maxZoom) {
+    double newScale = _previousScale * d.scale;
+    if (newScale > widget.maxScale) {
       return;
     }
 
     // Ensure that item under the focal point stays in the same place despite zooming
     final Offset normalizedOffset =
-        (_startingFocalPoint - _previousOffset) / _previousZoom;
-    final Offset newOffset = d.focalPoint - normalizedOffset * newZoom;
+        (_startingFocalPoint - _previousOffset) / _previousScale;
+    final Offset newOffset = d.focalPoint - normalizedOffset * newScale;
 
     setState(() {
-      _zoom = newZoom;
+      _scale = newScale;
       _offset = newOffset;
     });
   }
@@ -171,16 +180,16 @@ Size _containmentSize(Size canvas, Size image) {
 }
 
 class _ZoomableImagePainter extends CustomPainter {
-  const _ZoomableImagePainter({this.image, this.offset, this.zoom});
+  const _ZoomableImagePainter({this.image, this.offset, this.scale});
 
   final ui.Image image;
   final Offset offset;
-  final double zoom;
+  final double scale;
 
   @override
   void paint(Canvas canvas, Size canvasSize) {
     Size imageSize = new Size(image.width.toDouble(), image.height.toDouble());
-    Size targetSize = imageSize * zoom;
+    Size targetSize = imageSize * scale;
 
     paintImage(
       canvas: canvas,
@@ -192,6 +201,6 @@ class _ZoomableImagePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_ZoomableImagePainter old) {
-    return old.image != image || old.offset != offset || old.zoom != zoom;
+    return old.image != image || old.offset != offset || old.scale != scale;
   }
 }
