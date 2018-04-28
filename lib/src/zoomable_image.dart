@@ -24,8 +24,6 @@ Size _containmentSize(Size canvas, Size image) {
 class ZoomableImage extends StatefulWidget {
   final ImageProvider image;
   final double maxScale;
-  final double maxZoom;
-  final double minZoom;
   final GestureTapCallback onTap;
   final Color backgroundColor;
   final Widget placeholder;
@@ -39,15 +37,6 @@ class ZoomableImage extends StatefulWidget {
     /// a single device pixel will be rendered as up to 4 logical pixels.
     this.maxScale = 2.0,
 
-    /// Maximum zoom relative to the size of the image within the context.
-    /// A value of 4.0 means that the image can be zoomed in to at most 4x its
-    /// starting size.
-    this.maxZoom = 4.0,
-
-    /// Minimum zoom relative to the size of the image within the context.
-    /// A value of 0.5 means that the image can be zoomed out to be at most 0.5x
-    /// its starting size.
-    this.minZoom = 0.5,
     this.onTap,
     this.backgroundColor = Colors.black,
     this.placeholder,
