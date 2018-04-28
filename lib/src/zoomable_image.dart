@@ -5,7 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 class ZoomableImage extends StatefulWidget {
-  ZoomableImage(this.image, {Key key, this.scale = 2.0, this.onTap, this.backgroundColor = Colors.black})
+  ZoomableImage(this.image, {
+    Key key,
+    this.scale = 2.0,
+    this.onTap,
+    this.backgroundColor = Colors.black,
+  })
       : super(key: key);
 
   final ImageProvider image;
@@ -20,8 +25,8 @@ class ZoomableImage extends StatefulWidget {
 
 // See /flutter/examples/layers/widgets/gestures.dart
 class _ZoomableImageState extends State<ZoomableImage> {
-  final double _scale;
-  _ZoomableImageState(this._scale);
+  final double _maxScale;
+  _ZoomableImageState(this._maxScale);
 
   ImageStream _imageStream;
   ui.Image _image;
@@ -78,7 +83,7 @@ class _ZoomableImageState extends State<ZoomableImage> {
 
   void _handleDoubleTap(BuildContext ctx) {
     double newZoom = _zoom * 2;
-    if (newZoom > 1.0) {
+    if (newZoom > _maxScale) {
       return;
     }
 
@@ -103,7 +108,7 @@ class _ZoomableImageState extends State<ZoomableImage> {
 
   void _handleScaleUpdate(ScaleUpdateDetails d) {
     double newZoom = _previousZoom * d.scale;
-    if (newZoom > 1.0) {
+    if (newZoom > _maxScale) {
       return;
     }
 
@@ -182,6 +187,7 @@ class _ZoomableImagePainter extends CustomPainter {
       canvas: canvas,
       rect: offset & targetSize,
       image: image,
+      fit: BoxFit.fill,
     );
   }
 
