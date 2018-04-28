@@ -50,7 +50,7 @@ class ZoomableImage extends StatefulWidget {
     this.minZoom = 0.5,
     this.onTap,
     this.backgroundColor = Colors.black,
-    this.placeholder = const CircularProgressIndicator(),
+    this.placeholder,
   }) : super(key: key);
 
   @override
@@ -147,7 +147,7 @@ class _ZoomableImageState extends State<ZoomableImage> {
     }
 
     return _image == null
-        ? new Center(child: widget.placeholder)
+        ? widget.placeholder
         : new LayoutBuilder(builder: (ctx, constraints) {
             _initImageWithConstraints(constraints);
             return new GestureDetector(

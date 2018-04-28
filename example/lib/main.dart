@@ -7,6 +7,7 @@ void main() {
       home: new Scaffold(
         body: new ZoomableImage(
             new AssetImage('images/squirrel.jpg'),
+            placeholder: const Center(child: const CircularProgressIndicator()),
             backgroundColor: Colors.red),
       ),
     ),
