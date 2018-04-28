@@ -4,6 +4,23 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
+// Given a canvas and an image, determine what size the image should be to be
+// contained in but not exceed the canvas while preserving its aspect ratio.
+Size _containmentSize(Size canvas, Size image) {
+  double canvasRatio = canvas.width / canvas.height;
+  double imageRatio = image.width / image.height;
+
+  if (canvasRatio < imageRatio) {
+    // fat
+    return new Size(canvas.width, canvas.width / imageRatio);
+  } else if (canvasRatio > imageRatio) {
+    // skinny
+    return new Size(canvas.height * imageRatio, canvas.height);
+  } else {
+    return canvas;
+  }
+}
+
 class ZoomableImage extends StatefulWidget {
   final ImageProvider image;
   final double maxScale;
@@ -11,25 +28,30 @@ class ZoomableImage extends StatefulWidget {
   final double minZoom;
   final GestureTapCallback onTap;
   final Color backgroundColor;
+  final Widget placeholder;
 
-  ZoomableImage(this.image, {
+  ZoomableImage(
+    this.image, {
     Key key,
     @deprecated double scale,
+
     /// Maximum ratio to blow up image pixels. A value of 2.0 means that the
     /// a single device pixel will be rendered as up to 4 logical pixels.
     this.maxScale = 2.0,
+
     /// Maximum zoom relative to the size of the image within the context.
     /// A value of 4.0 means that the image can be zoomed in to at most 4x its
     /// starting size.
     this.maxZoom = 4.0,
+
     /// Minimum zoom relative to the size of the image within the context.
     /// A value of 0.5 means that the image can be zoomed out to be at most 0.5x
     /// its starting size.
     this.minZoom = 0.5,
     this.onTap,
     this.backgroundColor = Colors.black,
-  })
-      : super(key: key);
+    this.placeholder = const CircularProgressIndicator(),
+  }) : super(key: key);
 
   @override
   _ZoomableImageState createState() => new _ZoomableImageState();
@@ -49,62 +71,42 @@ class _ZoomableImageState extends State<ZoomableImage> {
   double _previousScale;
   double _scale; // multiplier applied to scale the full image
 
-  @override
-  Widget build(BuildContext ctx) => _image == null
-      ? new Container()
-      : new LayoutBuilder(builder: _buildLayout);
-
-  Widget _buildLayout(BuildContext ctx, BoxConstraints constraints) {
-    if (_offset == null || _scale == null) {
-      _imageSize = new Size(
-        _image.width.toDouble(),
-        _image.height.toDouble(),
-      );
-
-      Size canvas = constraints.biggest;
-      Size fitted = _containmentSize(canvas, _imageSize);
-
-      Offset delta = canvas - fitted;
-      _offset = delta / 2.0; // Centers the image
-      _scale = canvas.width / _imageSize.width;
-    }
-
-    return new GestureDetector(
-      child: _child(),
-      onTap: widget.onTap,
-      onDoubleTap: () => _handleDoubleTap(ctx),
-      onScaleStart: _handleScaleStart,
-      onScaleUpdate: _handleScaleUpdate,
-    );
-  }
-
-  Widget _child() {
-    return new CustomPaint(
-      child: new Container(color: widget.backgroundColor),
-      foregroundPainter: new _ZoomableImagePainter(
-        image: _image,
-        offset: _offset,
-        scale: _scale,
-      ),
-    );
-  }
-
-  void _handleDoubleTap(BuildContext ctx) {
-    double newScale = _scale * 2;
-    if (newScale > widget.maxScale) {
+  void _initImageWithConstraints(BoxConstraints constraints) {
+    if (_offset != null && _scale != null) {
       return;
     }
 
-    // We want to zoom in on the center of the screen.
-    // Since we're zooming by a factor of 2, we want the new offset to be twice
-    // as far from the center in both width and height than it is now.
-    Offset center = ctx.size.center(Offset.zero);
-    Offset newOffset = _offset - (center - _offset);
+    _imageSize = new Size(
+      _image.width.toDouble(),
+      _image.height.toDouble(),
+    );
 
-    setState(() {
-      _scale = newScale;
-      _offset = newOffset;
-    });
+    Size canvas = constraints.biggest;
+    Size fitted = _containmentSize(canvas, _imageSize);
+
+    Offset delta = canvas - fitted;
+    _offset = delta / 2.0; // Centers the image
+    _scale = canvas.width / _imageSize.width;
+  }
+
+  Function() _handleDoubleTap(BuildContext ctx) {
+    return () {
+      double newScale = _scale * 2;
+      if (newScale > widget.maxScale) {
+        return;
+      }
+
+      // We want to zoom in on the center of the screen.
+      // Since we're zooming by a factor of 2, we want the new offset to be twice
+      // as far from the center in both width and height than it is now.
+      Offset center = ctx.size.center(Offset.zero);
+      Offset newOffset = _offset - (center - _offset);
+
+      setState(() {
+        _scale = newScale;
+        _offset = newOffset;
+      });
+    };
   }
 
   void _handleScaleStart(ScaleStartDetails d) {
@@ -129,6 +131,33 @@ class _ZoomableImageState extends State<ZoomableImage> {
       _scale = newScale;
       _offset = newOffset;
     });
+  }
+
+  @override
+  Widget build(BuildContext ctx) {
+    Widget paintWidget() {
+      return new CustomPaint(
+        child: new Container(color: widget.backgroundColor),
+        foregroundPainter: new _ZoomableImagePainter(
+          image: _image,
+          offset: _offset,
+          scale: _scale,
+        ),
+      );
+    }
+
+    return _image == null
+        ? new Center(child: widget.placeholder)
+        : new LayoutBuilder(builder: (ctx, constraints) {
+            _initImageWithConstraints(constraints);
+            return new GestureDetector(
+              child: paintWidget(),
+              onTap: widget.onTap,
+              onDoubleTap: _handleDoubleTap(ctx),
+              onScaleStart: _handleScaleStart,
+              onScaleUpdate: _handleScaleUpdate,
+            );
+          });
   }
 
   @override
@@ -159,23 +188,6 @@ class _ZoomableImageState extends State<ZoomableImage> {
   void dispose() {
     _imageStream.removeListener(_handleImageLoaded);
     super.dispose();
-  }
-}
-
-// Given a canvas and an image, determine what size the image should be to be contained in but not
-// exceed the canvas while preserving its aspect ratio.
-Size _containmentSize(Size canvas, Size image) {
-  double canvasRatio = canvas.width / canvas.height;
-  double imageRatio = image.width / image.height;
-
-  if (canvasRatio < imageRatio) {
-    // fat
-    return new Size(canvas.width, canvas.width / imageRatio);
-  } else if (canvasRatio > imageRatio) {
-    // skinny
-    return new Size(canvas.height * imageRatio, canvas.height);
-  } else {
-    return canvas;
   }
 }
 
