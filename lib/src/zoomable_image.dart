@@ -7,27 +7,26 @@ import 'package:flutter/rendering.dart';
 class ZoomableImage extends StatefulWidget {
   ZoomableImage(this.image, {
     Key key,
-    this.scale = 2.0,
+    /// Maximum ratio to blow up image pixels. A value of 2.0 means that the
+    /// maximum zoom will render a single device pixel up to 4 logical pixels.
+    double scale = 2.0,
     this.onTap,
     this.backgroundColor = Colors.black,
   })
-      : super(key: key);
+      : maxZoom = scale, super(key: key);
 
   final ImageProvider image;
-  final double scale;
+  final double maxZoom;
   final Color backgroundColor;
 
   final GestureTapCallback onTap;
 
   @override
-  _ZoomableImageState createState() => new _ZoomableImageState(scale);
+  _ZoomableImageState createState() => new _ZoomableImageState();
 }
 
 // See /flutter/examples/layers/widgets/gestures.dart
 class _ZoomableImageState extends State<ZoomableImage> {
-  final double _maxScale;
-  _ZoomableImageState(this._maxScale);
-
   ImageStream _imageStream;
   ui.Image _image;
   Size _imageSize;
@@ -83,7 +82,7 @@ class _ZoomableImageState extends State<ZoomableImage> {
 
   void _handleDoubleTap(BuildContext ctx) {
     double newZoom = _zoom * 2;
-    if (newZoom > _maxScale) {
+    if (newZoom > widget.maxZoom) {
       return;
     }
 
@@ -108,7 +107,7 @@ class _ZoomableImageState extends State<ZoomableImage> {
 
   void _handleScaleUpdate(ScaleUpdateDetails d) {
     double newZoom = _previousZoom * d.scale;
-    if (newZoom > _maxScale) {
+    if (newZoom > widget.maxZoom) {
       return;
     }
 
