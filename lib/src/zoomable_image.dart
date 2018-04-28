@@ -3,7 +3,6 @@ import 'dart:ui' as ui;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 
 class ZoomableImage extends StatefulWidget {
   ZoomableImage(this.image, {Key key, this.scale = 2.0, this.onTap, this.backgroundColor = Colors.black})
@@ -26,75 +25,92 @@ class _ZoomableImageState extends State<ZoomableImage> {
 
   ImageStream _imageStream;
   ui.Image _image;
-
-  // These values are treated as if unscaled.
+  Size _imageSize;
 
   Offset _startingFocalPoint;
 
   Offset _previousOffset;
-  Offset _offset = Offset.zero;
+  Offset _offset; // where the top left corner of the image is drawn
 
   double _previousZoom;
-  double _zoom = 1.0;
+  double _zoom; // multiplier applied to scale the full image
 
   @override
-  Widget build(BuildContext ctx) {
-    if (_image == null) {
-      return new Container();
+  Widget build(BuildContext ctx) => _image == null
+      ? new Container()
+      : new LayoutBuilder(builder: _buildLayout);
+
+  Widget _buildLayout(BuildContext ctx, BoxConstraints constraints) {
+    if (_offset == null || _zoom == null) {
+      _imageSize = new Size(
+        _image.width.toDouble(),
+        _image.height.toDouble(),
+      );
+
+      Size canvas = constraints.biggest;
+      Size fitted = _containmentSize(canvas, _imageSize);
+
+      Offset delta = canvas - fitted;
+      _offset = delta / 2.0; // Centers the image
+
+      _zoom = canvas.width / _imageSize.width;
     }
 
     return new GestureDetector(
       child: _child(),
       onTap: widget.onTap,
+      onDoubleTap: () => _handleDoubleTap(ctx),
       onScaleStart: _handleScaleStart,
-      onScaleUpdate: (d) => _handleScaleUpdate(ctx.size, d),
+      onScaleUpdate: _handleScaleUpdate,
     );
   }
 
   Widget _child() {
-    // Painting in a small box and blowing it up works, whereas painting in a large box and
-    // shrinking it down doesn't because the gesture area becomes smaller than the screen.
-    //
-    // This is bit counterintuitive because it's backwards, but it works.
-
-    Widget bloated = new CustomPaint(
-      child: new Container(),
-      painter: new _ZoomableImagePainter(
+    return new CustomPaint(
+      child: new Container(color: widget.backgroundColor),
+      foregroundPainter: new _ZoomableImagePainter(
         image: _image,
         offset: _offset,
-        zoom: _zoom / _scale,
+        zoom: _zoom,
       ),
-    );
-
-    bloated = new Stack(children: [
-      new Container(color: widget.backgroundColor),
-      bloated,
-    ]);
-
-    return new Transform(
-      transform: new Matrix4.diagonal3Values(_scale, _scale, _scale),
-      child: bloated,
     );
   }
 
+  void _handleDoubleTap(BuildContext ctx) {
+    double newZoom = _zoom * 2;
+    if (newZoom > 1.0) {
+      return;
+    }
+
+    // We want to zoom in on the center of the screen.
+    // Since we're zooming by a factor of 2, we want the new offset to be twice
+    // as far from the center in both width and height than it is now.
+    Offset center = ctx.size.center(Offset.zero);
+    Offset newOffset = _offset - (center - _offset);
+
+    setState(() {
+      _zoom = newZoom;
+      _offset = newOffset;
+    });
+  }
+
   void _handleScaleStart(ScaleStartDetails d) {
-    _startingFocalPoint = d.focalPoint / _scale;
+    print("starting scale at ${d.focalPoint} from $_offset $_zoom");
+    _startingFocalPoint = d.focalPoint;
     _previousOffset = _offset;
     _previousZoom = _zoom;
   }
 
-  void _handleScaleUpdate(Size size, ScaleUpdateDetails d) {
+  void _handleScaleUpdate(ScaleUpdateDetails d) {
     double newZoom = _previousZoom * d.scale;
-    bool tooZoomedIn = _image.width * _scale / newZoom <= size.width ||
-        _image.height * _scale / newZoom <= size.height;
-    if (tooZoomedIn) {
+    if (newZoom > 1.0) {
       return;
     }
 
     // Ensure that item under the focal point stays in the same place despite zooming
     final Offset normalizedOffset =
         (_startingFocalPoint - _previousOffset) / _previousZoom;
-    final Offset newOffset = d.focalPoint / _scale - normalizedOffset * newZoom;
+    final Offset newOffset = d.focalPoint - normalizedOffset * newZoom;
 
     setState(() {
       _zoom = newZoom;
@@ -120,7 +136,7 @@ class _ZoomableImageState extends State<ZoomableImage> {
   }
 
   void _handleImageLoaded(ImageInfo info, bool synchronousCall) {
-    print("image loaded: $info $synchronousCall");
+    print("image loaded: $info");
     setState(() {
       _image = info.image;
     });
@@ -133,6 +149,23 @@ class _ZoomableImageState extends State<ZoomableImage> {
   }
 }
 
+// Given a canvas and an image, determine what size the image should be to be contained in but not
+// exceed the canvas while preserving its aspect ratio.
+Size _containmentSize(Size canvas, Size image) {
+  double canvasRatio = canvas.width / canvas.height;
+  double imageRatio = image.width / image.height;
+
+  if (canvasRatio < imageRatio) {
+    // fat
+    return new Size(canvas.width, canvas.width / imageRatio);
+  } else if (canvasRatio > imageRatio) {
+    // skinny
+    return new Size(canvas.height * imageRatio, canvas.height);
+  } else {
+    return canvas;
+  }
+}
+
 class _ZoomableImagePainter extends CustomPainter {
   const _ZoomableImagePainter({this.image, this.offset, this.zoom});
 
@@ -141,8 +174,15 @@ class _ZoomableImagePainter extends CustomPainter {
   final double zoom;
 
   @override
-  void paint(Canvas canvas, Size size) {
-    paintImage(canvas: canvas, rect: offset & (size * zoom), image: image);
+  void paint(Canvas canvas, Size canvasSize) {
+    Size imageSize = new Size(image.width.toDouble(), image.height.toDouble());
+    Size targetSize = imageSize * zoom;
+
+    paintImage(
+      canvas: canvas,
+      rect: offset & targetSize,
+      image: image,
+    );
   }
 
   @override
