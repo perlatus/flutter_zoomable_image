@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/gestures.dart';
@@ -6,20 +7,7 @@ import 'package:flutter/rendering.dart';
 
 // Given a canvas and an image, determine what size the image should be to be
 // contained in but not exceed the canvas while preserving its aspect ratio.
-Size _containmentSize(Size canvas, Size image) {
-  double canvasRatio = canvas.width / canvas.height;
-  double imageRatio = image.width / image.height;
-
-  if (canvasRatio < imageRatio) {
-    // fat
-    return new Size(canvas.width, canvas.width / imageRatio);
-  } else if (canvasRatio > imageRatio) {
-    // skinny
-    return new Size(canvas.height * imageRatio, canvas.height);
-  } else {
-    return canvas;
-  }
-}
+Size _containmentSize(Size canvas, Size image) {}
 
 class ZoomableImage extends StatefulWidget {
   final ImageProvider image;
@@ -36,7 +24,6 @@ class ZoomableImage extends StatefulWidget {
     /// Maximum ratio to blow up image pixels. A value of 2.0 means that the
     /// a single device pixel will be rendered as up to 4 logical pixels.
     this.maxScale = 2.0,
-
     this.onTap,
     this.backgroundColor = Colors.black,
     this.placeholder,
@@ -60,22 +47,25 @@ class _ZoomableImageState extends State<ZoomableImage> {
   double _previousScale;
   double _scale; // multiplier applied to scale the full image
 
-  void _initImageWithConstraints(BoxConstraints constraints) {
-    if (_offset != null && _scale != null) {
-      return;
-    }
+  BoxConstraints _previousConstraints;
 
+  void _centerAndScaleImage(Size canvas) {
     _imageSize = new Size(
       _image.width.toDouble(),
       _image.height.toDouble(),
     );
 
-    Size canvas = constraints.biggest;
-    Size fitted = _containmentSize(canvas, _imageSize);
+    _scale = math.min(
+      canvas.width / _imageSize.width,
+      canvas.height / _imageSize.height,
+    );
+    Size fitted = new Size(
+      _imageSize.width * _scale,
+      _imageSize.height * _scale,
+    );
 
     Offset delta = canvas - fitted;
     _offset = delta / 2.0; // Centers the image
-    _scale = canvas.width / _imageSize.width;
   }
 
   Function() _handleDoubleTap(BuildContext ctx) {
@@ -135,18 +125,24 @@ class _ZoomableImageState extends State<ZoomableImage> {
       );
     }
 
-    return _image == null
-        ? widget.placeholder
-        : new LayoutBuilder(builder: (ctx, constraints) {
-            _initImageWithConstraints(constraints);
-            return new GestureDetector(
-              child: paintWidget(),
-              onTap: widget.onTap,
-              onDoubleTap: _handleDoubleTap(ctx),
-              onScaleStart: _handleScaleStart,
-              onScaleUpdate: _handleScaleUpdate,
-            );
-          });
+    if (_image == null) {
+      return widget.placeholder;
+    }
+
+    return new LayoutBuilder(builder: (ctx, constraints) {
+      if (_previousConstraints == null) {
+        _previousConstraints = constraints;
+        _centerAndScaleImage(constraints.biggest);
+      }
+
+      return new GestureDetector(
+        child: paintWidget(),
+        onTap: widget.onTap,
+        onDoubleTap: _handleDoubleTap(ctx),
+        onScaleStart: _handleScaleStart,
+        onScaleUpdate: _handleScaleUpdate,
+      );
+    });
   }
 
   @override
