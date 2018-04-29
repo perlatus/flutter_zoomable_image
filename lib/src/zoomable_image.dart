@@ -49,29 +49,35 @@ class _ZoomableImageState extends State<ZoomableImage> {
 
   Orientation _previousOrientation;
 
-  void _centerAndScaleImage(Size canvas) {
+  Size _canvasSize;
+
+  void _centerAndScaleImage() {
     _imageSize = new Size(
       _image.width.toDouble(),
       _image.height.toDouble(),
     );
 
     _scale = math.min(
-      canvas.width / _imageSize.width,
-      canvas.height / _imageSize.height,
+      _canvasSize.width / _imageSize.width,
+      _canvasSize.height / _imageSize.height,
     );
     Size fitted = new Size(
       _imageSize.width * _scale,
       _imageSize.height * _scale,
     );
 
-    Offset delta = canvas - fitted;
+    Offset delta = _canvasSize - fitted;
     _offset = delta / 2.0; // Centers the image
+
+    print(_scale);
   }
 
   Function() _handleDoubleTap(BuildContext ctx) {
     return () {
       double newScale = _scale * 2;
       if (newScale > widget.maxScale) {
+        _centerAndScaleImage();
+        setState(() {});
         return;
       }
 
@@ -133,7 +139,8 @@ class _ZoomableImageState extends State<ZoomableImage> {
       Orientation orientation = MediaQuery.of(ctx).orientation;
       if (orientation != _previousOrientation) {
         _previousOrientation = orientation;
-        _centerAndScaleImage(constraints.biggest);
+        _canvasSize = constraints.biggest;
+        _centerAndScaleImage();
       }
 
       return new GestureDetector(
