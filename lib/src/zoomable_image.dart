@@ -47,7 +47,7 @@ class _ZoomableImageState extends State<ZoomableImage> {
   double _previousScale;
   double _scale; // multiplier applied to scale the full image
 
-  BoxConstraints _previousConstraints;
+  Orientation _previousOrientation;
 
   void _centerAndScaleImage(Size canvas) {
     _imageSize = new Size(
@@ -130,8 +130,9 @@ class _ZoomableImageState extends State<ZoomableImage> {
     }
 
     return new LayoutBuilder(builder: (ctx, constraints) {
-      if (_previousConstraints == null) {
-        _previousConstraints = constraints;
+      Orientation orientation = MediaQuery.of(ctx).orientation;
+      if (orientation != _previousOrientation) {
+        _previousOrientation = orientation;
         _centerAndScaleImage(constraints.biggest);
       }
 
