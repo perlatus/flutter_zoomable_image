@@ -4,6 +4,8 @@
 .packages
 .pub/
 build/
+doc/api
 ios/.generated/
 packages
 pubspec.lock
+
