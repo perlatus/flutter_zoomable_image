@@ -26,6 +26,8 @@ class ZoomableImage extends StatefulWidget {
     this.maxScale = 2.0,
     this.onTap,
     this.backgroundColor = Colors.black,
+
+    /// Placeholder widget to be used while [image] is being resolved.
     this.placeholder,
   }) : super(key: key);
 
