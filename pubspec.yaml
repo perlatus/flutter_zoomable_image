@@ -5,8 +5,6 @@ author: perlatus <perlatus@zoomable_image.email.vczf.io>
 homepage: https://github.com/perlatus/flutter_zoomable_image
 
 version: 1.2.0
-environment:
-  sdk: ">=1.19.0 < 2.0.0"
 
 dependencies:
   flutter:
