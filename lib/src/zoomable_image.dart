@@ -12,6 +12,7 @@ Size _containmentSize(Size canvas, Size image) {}
 class ZoomableImage extends StatefulWidget {
   final ImageProvider image;
   final double maxScale;
+  final double minScale;
   final GestureTapCallback onTap;
   final Color backgroundColor;
   final Widget placeholder;
@@ -24,6 +25,7 @@ class ZoomableImage extends StatefulWidget {
     /// Maximum ratio to blow up image pixels. A value of 2.0 means that the
     /// a single device pixel will be rendered as up to 4 logical pixels.
     this.maxScale = 2.0,
+    this.minScale = 0.25,
     this.onTap,
     this.backgroundColor = Colors.black,
 
@@ -105,7 +107,7 @@ class _ZoomableImageState extends State<ZoomableImage> {
 
   void _handleScaleUpdate(ScaleUpdateDetails d) {
     double newScale = _previousScale * d.scale;
-    if (newScale > widget.maxScale) {
+    if (newScale > widget.maxScale || newScale < widget.minScale) {
       return;
     }
 
@@ -134,7 +136,7 @@ class _ZoomableImageState extends State<ZoomableImage> {
     }
 
     if (_image == null) {
-      return widget.placeholder;
+      return widget.placeholder ?? Center(child: CircularProgressIndicator());
     }
 
     return new LayoutBuilder(builder: (ctx, constraints) {
