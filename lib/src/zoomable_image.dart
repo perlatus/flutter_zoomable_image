@@ -25,7 +25,7 @@ class ZoomableImage extends StatefulWidget {
     /// Maximum ratio to blow up image pixels. A value of 2.0 means that the
     /// a single device pixel will be rendered as up to 4 logical pixels.
     this.maxScale = 2.0,
-    this.minScale = 0.25,
+    this.minScale = 0.0,
     this.onTap,
     this.backgroundColor = Colors.black,
 
